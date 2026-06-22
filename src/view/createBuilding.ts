@@ -1,4 +1,4 @@
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
 
 type CreateBuildingOptions = {
   floorCount: number;
@@ -10,6 +10,16 @@ type CreateBuildingOptions = {
 };
 
 export function createBuilding(options: CreateBuildingOptions): Container {
+  const building = new Container();
+  const lines = createBuildingLines(options);
+  const labels = createFloorLabels(options);
+
+  building.addChild(lines, ...labels);
+
+  return building;
+}
+
+function createBuildingLines(options: CreateBuildingOptions): Graphics {
   const {
     floorCount,
     floorHeight,
@@ -19,7 +29,6 @@ export function createBuilding(options: CreateBuildingOptions): Container {
     bottomY,
   } = options;
 
-  const building = new Container();
   const lines = new Graphics();
   const topY = bottomY - floorCount * floorHeight;
 
@@ -38,7 +47,27 @@ export function createBuilding(options: CreateBuildingOptions): Container {
   }
 
   lines.stroke({ width: 2, color: "#111111" });
-  building.addChild(lines);
 
-  return building;
+  return lines;
+}
+
+function createFloorLabels(options: CreateBuildingOptions): Text[] {
+  const { floorCount, floorHeight, buildingRightX, bottomY } = options;
+  const labelRightPadding = 24;
+  const labels: Text[] = [];
+
+  for (let floor = 1; floor <= floorCount; floor++) {
+    const centerY = bottomY - (floor - 1) * floorHeight - floorHeight / 2;
+    const floorLabel = new Text({
+      text: `level ${floor}`,
+      style: {
+        fill: "#3d3939",
+      },
+    });
+    floorLabel.y = centerY - 10;
+    floorLabel.x = buildingRightX - labelRightPadding - floorLabel.width;
+    labels.push(floorLabel);
+  }
+
+  return labels;
 }

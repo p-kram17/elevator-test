@@ -10,6 +10,7 @@ type AppConfig = {
     leftX: number;
     corridorLeftX: number;
     rightPadding: number;
+    labelWidth: number;
   };
 
   elevator: {
@@ -18,10 +19,22 @@ type AppConfig = {
     color: string;
     capacity: ElevatorCapacity;
   };
+
+  person: {
+    width: number;
+    height: number;
+    gap: number;
+    strokeWidth: number;
+    upColor: string;
+    downColor: string;
+    fillColor: string;
+    textColor: string;
+    fontSize: number;
+  };
 };
 
 export const config: AppConfig = {
-  backgroundColor: "#a1a1a1",
+  backgroundColor: "#ffffff",
 
   building: {
     floorCount: 5,
@@ -29,12 +42,25 @@ export const config: AppConfig = {
     leftX: 20,
     corridorLeftX: 100,
     rightPadding: 40,
+    labelWidth: 100,
   },
 
   elevator: {
     width: 60,
     height: 70,
-    color: "#474747",
+    color: "#00a6e8",
     capacity: 3,
+  },
+
+  person: {
+    width: 22,
+    height: 34,
+    gap: 8,
+    strokeWidth: 3,
+    upColor: "#3b45d9",
+    downColor: "#16b85f",
+    fillColor: "#ffffff",
+    textColor: "#111111",
+    fontSize: 18,
   },
 };

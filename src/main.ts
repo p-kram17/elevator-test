@@ -1,18 +1,16 @@
 import { Application } from "pixi.js";
-import { createElevator } from "./view/createElevator";
 import { config } from "./config";
+import { SimulationController } from "./controller/SimulationController";
 import { BuildingLayout } from "./layout/BuildingLayout";
+import { BuildingModel } from "./model/BuildingModel";
 import { createBuilding } from "./view/createBuilding";
-import { createPerson } from "./view/createPerson";
+import { createElevator } from "./view/createElevator";
 
 (async () => {
-  // Create a new application
   const app = new Application();
 
-  // Initialize the application
   await app.init({ background: config.backgroundColor, resizeTo: window });
 
-  // Append the application canvas to the document body
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   const elevator = createElevator(config.elevator);
@@ -45,39 +43,27 @@ import { createPerson } from "./view/createPerson";
     bottomY: buildingBottomY,
   });
 
+  const buildingModel = new BuildingModel({
+    floorCount: config.building.floorCount,
+    elevatorCapacity: config.elevator.capacity,
+    startFloor: 1,
+  });
+
+  const simulation = new SimulationController({
+    building: buildingModel,
+    layout,
+    stage: app.stage,
+    personConfig: config.person,
+  });
+
   elevator.x = layout.getElevatorX();
-  elevator.y = layout.getFloorCenterY(1);
+  elevator.y = layout.getFloorCenterY(
+    buildingModel.getElevator().getCurrentFloor(),
+  );
 
-  const createDemoPerson = (direction: "up" | "down", targetFloor: number) =>
-    createPerson({
-      direction,
-      targetFloor,
-      width: config.person.width,
-      height: config.person.height,
-      strokeWidth: config.person.strokeWidth,
-      upColor: config.person.upColor,
-      downColor: config.person.downColor,
-      fillColor: config.person.fillColor,
-      textColor: config.person.textColor,
-      fontSize: config.person.fontSize,
-    });
+  app.stage.addChild(building, elevator);
 
-  const waitingPerson = createDemoPerson("down", 1);
-  waitingPerson.x = layout.getPersonWaitingX(0);
-  waitingPerson.y = layout.getPersonY(3);
-
-  const nextWaitingPerson = createDemoPerson("up", 5);
-  nextWaitingPerson.x = layout.getPersonWaitingX(1);
-  nextWaitingPerson.y = layout.getPersonY(3);
-
-  const hallwayPerson = createDemoPerson("up", 5);
-  hallwayPerson.x = layout.getPersonSpawnX();
-  hallwayPerson.y = layout.getPersonY(4);
-
-  app.stage.addChild(building);
-  app.stage.addChild(elevator);
-  app.stage.addChild(waitingPerson, nextWaitingPerson, hallwayPerson);
-
-  // Listen for animate update
-  // app.ticker.add((time) => {});
+  simulation.spawnPassenger(3, 1);
+  simulation.spawnPassenger(3, 5);
+  simulation.spawnPassenger(4, 5);
 })();

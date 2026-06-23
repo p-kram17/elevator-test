@@ -33,6 +33,8 @@ type AppConfig = {
   };
 };
 
+export type PersonConfig = AppConfig["person"];
+
 export const config: AppConfig = {
   backgroundColor: "#ffffff",
 

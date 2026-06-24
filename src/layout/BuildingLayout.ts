@@ -42,10 +42,15 @@ export class BuildingLayout {
     return corridorLeftX + personGap + index * (personWidth + personGap);
   }
 
-  public getPersonSpawnX(): number {
-    const { buildingRightX, floorLabelWidth, personGap, personWidth } =
-      this.options;
+  public getPersonEntryX(): number {
+    const { buildingRightX, personGap } = this.options;
 
-    return buildingRightX - floorLabelWidth - personGap - personWidth;
+    return buildingRightX + personGap;
+  }
+
+  public getPersonHiddenX(): number {
+    const { buildingRightX, personGap, personWidth } = this.options;
+
+    return buildingRightX + personGap + personWidth;
   }
 }

@@ -1,4 +1,4 @@
-import { Application, Graphics } from "pixi.js";
+import { Application, Container, Graphics } from "pixi.js";
 import { config } from "./config";
 import { SimulationController } from "./controller/SimulationController";
 import { BuildingLayout } from "./layout/BuildingLayout";
@@ -51,6 +51,14 @@ import { createElevator } from "./view/createElevator";
     buildingRightX,
     bottomY: buildingBottomY,
   });
+  const passengerLayer = new Container();
+  const rightSideCover = createRightSideCover({
+    x: buildingRightX + 1,
+    y: buildingTopY,
+    width: app.screen.width - buildingRightX - 1,
+    height: buildingHeight,
+    color: config.backgroundColor,
+  });
 
   const buildingModel = new BuildingModel({
     floorCount: config.building.floorCount,
@@ -61,7 +69,7 @@ import { createElevator } from "./view/createElevator";
   const simulation = new SimulationController({
     building: buildingModel,
     layout,
-    stage: app.stage,
+    stage: passengerLayer,
     elevatorView: elevator,
     elevatorDirectionIndicator,
     elevatorWidth: config.elevator.width,
@@ -78,7 +86,7 @@ import { createElevator } from "./view/createElevator";
     buildingModel.getElevator().getCurrentFloor(),
   );
 
-  app.stage.addChild(building, elevator);
+  app.stage.addChild(passengerLayer, building, elevator, rightSideCover);
 
   for (let floor = 1; floor <= config.building.floorCount; floor++) {
     schedulePassengerSpawn(floor, simulation);
@@ -130,4 +138,18 @@ function createElevatorDirectionIndicator(color: string): Graphics {
     .lineTo(-5, 5)
     .closePath()
     .fill(color);
+}
+
+type RightSideCoverOptions = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+};
+
+function createRightSideCover(options: RightSideCoverOptions): Graphics {
+  return new Graphics()
+    .rect(options.x, options.y, options.width, options.height)
+    .fill(options.color);
 }

@@ -75,11 +75,8 @@ export class SimulationController {
     });
     this.reserveQueueSlot(person);
 
-    const targetIndex = this.getQueueOrder(person.fromFloor).indexOf(person.id);
-    const spawnOffset =
-      targetIndex * (this.personConfig.width + this.personConfig.gap);
-
-    personView.x = this.layout.getPersonSpawnX() - spawnOffset;
+    personView.alpha = 1;
+    personView.x = this.layout.getPersonEntryX();
     personView.y = this.layout.getPersonY(person.fromFloor);
 
     this.stage.addChild(personView);
@@ -192,16 +189,23 @@ export class SimulationController {
     floor: number,
     droppedOffPassengers: Person[],
   ): void {
-    for (const person of droppedOffPassengers) {
-      const passengerState = this.passengerViewStates.get(person.id);
+    const droppedOffStates = droppedOffPassengers
+      .map((person) => this.passengerViewStates.get(person.id))
+      .filter((passengerState): passengerState is PassengerViewState =>
+        Boolean(passengerState),
+      )
+      .map((passengerState) => ({
+        passengerState,
+        worldPosition: passengerState.view.getGlobalPosition(),
+      }))
+      .sort(
+        (firstPassenger, secondPassenger) =>
+          firstPassenger.worldPosition.x - secondPassenger.worldPosition.x,
+      );
 
-      if (!passengerState) {
-        continue;
-      }
-
+    droppedOffStates.forEach(({ passengerState, worldPosition }, index) => {
+      const person = passengerState.person;
       this.stopPassengerTween(person.id);
-
-      const worldPosition = passengerState.view.getGlobalPosition();
 
       passengerState.queueState = "leaving";
       this.stage.addChild(passengerState.view);
@@ -211,7 +215,10 @@ export class SimulationController {
       const tween = new Tween(passengerState.view, this.tweenGroup)
         .to(
           {
-            x: this.layout.getPersonSpawnX(),
+            x:
+              this.layout.getPersonHiddenX() -
+              (droppedOffStates.length - index - 1) *
+                (this.personConfig.width + this.personConfig.gap),
             y: this.layout.getPersonY(floor),
           },
           this.passengerWalkDurationMs,
@@ -225,7 +232,7 @@ export class SimulationController {
         .start();
 
       this.passengerTweens.set(person.id, tween);
-    }
+    });
   }
 
   private boardPassengers(floor: number, boardedPassengers: Person[]): void {

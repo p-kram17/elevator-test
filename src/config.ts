@@ -34,6 +34,8 @@ type AppConfig = {
 
   animation: {
     passengerWalkDurationMs: number;
+    elevatorMoveDurationMsPerFloor: number;
+    elevatorStopDurationMs: number;
   };
 
   spawn: {
@@ -77,6 +79,8 @@ export const config: AppConfig = {
 
   animation: {
     passengerWalkDurationMs: 1200,
+    elevatorMoveDurationMsPerFloor: 1000,
+    elevatorStopDurationMs: 800,
   },
 
   spawn: {

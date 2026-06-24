@@ -23,26 +23,37 @@ type SimulationControllerOptions = {
   building: BuildingModel;
   layout: BuildingLayout;
   stage: Container;
+  elevatorView: Container;
   personConfig: PersonConfig;
   passengerWalkDurationMs: number;
+  elevatorMoveDurationMsPerFloor: number;
+  elevatorStopDurationMs: number;
 };
 
 export class SimulationController {
   private readonly building: BuildingModel;
   private readonly layout: BuildingLayout;
   private readonly stage: Container;
+  private readonly elevatorView: Container;
   private readonly personConfig: PersonConfig;
   private readonly passengerWalkDurationMs: number;
+  private readonly elevatorMoveDurationMsPerFloor: number;
+  private readonly elevatorStopDurationMs: number;
   private readonly tweenGroup = new Group();
   private readonly passengerViewStates = new Map<number, PassengerViewState>();
   private readonly queueOrderByFloor = new Map<number, number[]>();
+  private isElevatorLoopActive = false;
 
   constructor(options: SimulationControllerOptions) {
     this.building = options.building;
     this.layout = options.layout;
     this.stage = options.stage;
+    this.elevatorView = options.elevatorView;
     this.personConfig = options.personConfig;
     this.passengerWalkDurationMs = options.passengerWalkDurationMs;
+    this.elevatorMoveDurationMsPerFloor =
+      options.elevatorMoveDurationMsPerFloor;
+    this.elevatorStopDurationMs = options.elevatorStopDurationMs;
   }
 
   spawnPassenger(fromFloor: number, targetFloor: number): void {
@@ -102,8 +113,57 @@ export class SimulationController {
       .onComplete(() => {
         passengerState.queueState = "waiting";
         this.building.addPassenger(person);
+        this.runElevatorLoop();
       })
       .start();
+  }
+
+  private runElevatorLoop(): void {
+    if (this.isElevatorLoopActive) {
+      return;
+    }
+
+    this.isElevatorLoopActive = true;
+    this.moveElevatorToNextStop();
+  }
+
+  private moveElevatorToNextStop(): void {
+    const nextStop = this.building.getNextElevatorStop();
+
+    if (nextStop === null) {
+      this.isElevatorLoopActive = false;
+      return;
+    }
+
+    const currentFloor = this.building.getElevator().getCurrentFloor();
+    const floorDistance = Math.abs(nextStop - currentFloor);
+    const moveDuration = floorDistance * this.elevatorMoveDurationMsPerFloor;
+
+    if (moveDuration === 0) {
+      this.handleElevatorStop(nextStop);
+      return;
+    }
+
+    new Tween(this.elevatorView, this.tweenGroup)
+      .to(
+        {
+          y: this.layout.getFloorCenterY(nextStop),
+        },
+        moveDuration,
+      )
+      .easing(Easing.Quadratic.InOut)
+      .onComplete(() => {
+        this.handleElevatorStop(nextStop);
+      })
+      .start();
+  }
+
+  private handleElevatorStop(floor: number): void {
+    this.building.handleElevatorArrival(floor);
+
+    window.setTimeout(() => {
+      this.moveElevatorToNextStop();
+    }, this.elevatorStopDurationMs);
   }
 
   private getQueueOrder(floor: number): number[] {

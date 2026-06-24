@@ -53,8 +53,12 @@ import { createElevator } from "./view/createElevator";
     building: buildingModel,
     layout,
     stage: app.stage,
+    elevatorView: elevator,
     personConfig: config.person,
     passengerWalkDurationMs: config.animation.passengerWalkDurationMs,
+    elevatorMoveDurationMsPerFloor:
+      config.animation.elevatorMoveDurationMsPerFloor,
+    elevatorStopDurationMs: config.animation.elevatorStopDurationMs,
   });
 
   elevator.x = layout.getElevatorX();

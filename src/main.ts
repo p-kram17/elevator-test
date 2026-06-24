@@ -54,6 +54,8 @@ import { createElevator } from "./view/createElevator";
     layout,
     stage: app.stage,
     elevatorView: elevator,
+    elevatorWidth: config.elevator.width,
+    elevatorHeight: config.elevator.height,
     personConfig: config.person,
     passengerWalkDurationMs: config.animation.passengerWalkDurationMs,
     elevatorMoveDurationMsPerFloor:

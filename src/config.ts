@@ -31,6 +31,15 @@ type AppConfig = {
     textColor: string;
     fontSize: number;
   };
+
+  animation: {
+    passengerWalkDurationMs: number;
+  };
+
+  spawn: {
+    minIntervalMs: number;
+    maxIntervalMs: number;
+  };
 };
 
 export type PersonConfig = AppConfig["person"];
@@ -64,5 +73,14 @@ export const config: AppConfig = {
     fillColor: "#ffffff",
     textColor: "#111111",
     fontSize: 18,
+  },
+
+  animation: {
+    passengerWalkDurationMs: 1200,
+  },
+
+  spawn: {
+    minIntervalMs: 4000,
+    maxIntervalMs: 10000,
   },
 };

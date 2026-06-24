@@ -54,6 +54,7 @@ import { createElevator } from "./view/createElevator";
     layout,
     stage: app.stage,
     personConfig: config.person,
+    passengerWalkDurationMs: config.animation.passengerWalkDurationMs,
   });
 
   elevator.x = layout.getElevatorX();
@@ -63,7 +64,45 @@ import { createElevator } from "./view/createElevator";
 
   app.stage.addChild(building, elevator);
 
-  simulation.spawnPassenger(3, 1);
-  simulation.spawnPassenger(3, 5);
-  simulation.spawnPassenger(4, 5);
+  for (let floor = 1; floor <= config.building.floorCount; floor++) {
+    schedulePassengerSpawn(floor, simulation);
+  }
+
+  app.ticker.add(() => {
+    simulation.updateTweens();
+  });
 })();
+
+function schedulePassengerSpawn(
+  fromFloor: number,
+  simulation: SimulationController,
+): void {
+  window.setTimeout(() => {
+    simulation.spawnPassenger(
+      fromFloor,
+      getRandomTargetFloor(fromFloor, config.building.floorCount),
+    );
+    schedulePassengerSpawn(fromFloor, simulation);
+  }, getRandomSpawnIntervalMs());
+}
+
+function getRandomSpawnIntervalMs(): number {
+  return getRandomInteger(
+    config.spawn.minIntervalMs,
+    config.spawn.maxIntervalMs,
+  );
+}
+
+function getRandomTargetFloor(fromFloor: number, floorCount: number): number {
+  let targetFloor = fromFloor;
+
+  while (targetFloor === fromFloor) {
+    targetFloor = getRandomInteger(1, floorCount);
+  }
+
+  return targetFloor;
+}
+
+function getRandomInteger(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

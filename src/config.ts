@@ -78,7 +78,7 @@ export const config: AppConfig = {
   },
 
   animation: {
-    passengerWalkDurationMs: 1200,
+    passengerWalkDurationMs: 2500,
     elevatorMoveDurationMsPerFloor: 1000,
     elevatorStopDurationMs: 800,
   },

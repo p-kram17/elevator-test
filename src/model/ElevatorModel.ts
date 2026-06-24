@@ -41,6 +41,10 @@ export class ElevatorModel {
       return false;
     }
 
+    if (this.direction === "idle") {
+      this.direction = person.direction;
+    }
+
     person.status = "inElevator";
     this.passengers.push(person);
 
@@ -65,12 +69,19 @@ export class ElevatorModel {
 
   moveToFloor(floor: number): void {
     if (floor === this.currentFloor) {
-      this.direction = "idle";
       return;
     }
 
     this.direction = floor > this.currentFloor ? "up" : "down";
     this.currentFloor = floor;
+  }
+
+  setDirectionToward(floor: number): void {
+    if (floor === this.currentFloor) {
+      return;
+    }
+
+    this.direction = floor > this.currentFloor ? "up" : "down";
   }
 
   stop(): void {

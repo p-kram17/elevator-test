@@ -78,6 +78,11 @@ export class BuildingModel {
     this.elevator.moveToFloor(floor);
 
     const droppedOff = this.elevator.dropOffCurrentFloor();
+
+    if (this.elevator.getPassengers().length === 0) {
+      this.elevator.stop();
+    }
+
     const boarded = this.boardWaitingPassengers(floor);
 
     if (this.elevator.getPassengers().length === 0 && boarded.length === 0) {
@@ -126,7 +131,9 @@ export class BuildingModel {
     const passengerTargetFloors = this.elevator
       .getPassengers()
       .map((person) => person.targetFloor);
-    const waitingFloors = this.getWaitingFloors(direction);
+    const waitingFloors = this.elevator.hasSpace()
+      ? this.getWaitingFloors(direction)
+      : [];
 
     return [...new Set([...passengerTargetFloors, ...waitingFloors])];
   }

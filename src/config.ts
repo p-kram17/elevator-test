@@ -62,7 +62,7 @@ export const config: AppConfig = {
     width: 60,
     height: 70,
     color: "#00a6e8",
-    capacity: 3,
+    capacity: 4,
   },
 
   person: {

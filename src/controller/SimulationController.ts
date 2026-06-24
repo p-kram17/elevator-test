@@ -45,6 +45,7 @@ export class SimulationController {
   private readonly elevatorStopDurationMs: number;
   private readonly tweenGroup = new Group();
   private readonly passengerViewStates = new Map<number, PassengerViewState>();
+  private readonly passengerTweens = new Map<number, Tween<Container>>();
   private readonly queueOrderByFloor = new Map<number, number[]>();
   private isElevatorLoopActive = false;
 
@@ -107,7 +108,7 @@ export class SimulationController {
     const { person, view } = passengerState;
     const targetIndex = this.getQueueOrder(person.fromFloor).indexOf(person.id);
 
-    new Tween(view, this.tweenGroup)
+    const tween = new Tween(view, this.tweenGroup)
       .to(
         {
           x: this.layout.getPersonWaitingX(targetIndex),
@@ -117,11 +118,15 @@ export class SimulationController {
       )
       .easing(Easing.Quadratic.Out)
       .onComplete(() => {
+        this.passengerTweens.delete(person.id);
         passengerState.queueState = "waiting";
         this.building.addPassenger(person);
+        this.reflowFloorQueue(person.fromFloor);
         this.runElevatorLoop();
       })
       .start();
+
+    this.passengerTweens.set(person.id, tween);
   }
 
   private runElevatorLoop(): void {
@@ -150,6 +155,8 @@ export class SimulationController {
       return;
     }
 
+    this.building.getElevator().setDirectionToward(nextStop);
+
     new Tween(this.elevatorView, this.tweenGroup)
       .to(
         {
@@ -165,13 +172,55 @@ export class SimulationController {
   }
 
   private handleElevatorStop(floor: number): void {
-    const { boarded } = this.building.handleElevatorArrival(floor);
+    const { droppedOff, boarded } = this.building.handleElevatorArrival(floor);
 
+    this.dropOffPassengers(floor, droppedOff);
     this.boardPassengers(floor, boarded);
+    this.reflowElevatorPassengers();
 
     window.setTimeout(() => {
       this.moveElevatorToNextStop();
     }, this.elevatorStopDurationMs);
+  }
+
+  private dropOffPassengers(
+    floor: number,
+    droppedOffPassengers: Person[],
+  ): void {
+    for (const person of droppedOffPassengers) {
+      const passengerState = this.passengerViewStates.get(person.id);
+
+      if (!passengerState) {
+        continue;
+      }
+
+      this.stopPassengerTween(person.id);
+
+      const worldPosition = passengerState.view.getGlobalPosition();
+
+      passengerState.queueState = "leaving";
+      this.stage.addChild(passengerState.view);
+      passengerState.view.x = worldPosition.x;
+      passengerState.view.y = worldPosition.y;
+
+      const tween = new Tween(passengerState.view, this.tweenGroup)
+        .to(
+          {
+            x: this.layout.getPersonSpawnX(),
+            y: this.layout.getPersonY(floor),
+          },
+          this.passengerWalkDurationMs,
+        )
+        .easing(Easing.Quadratic.Out)
+        .onComplete(() => {
+          this.passengerTweens.delete(person.id);
+          this.stage.removeChild(passengerState.view);
+          this.passengerViewStates.delete(person.id);
+        })
+        .start();
+
+      this.passengerTweens.set(person.id, tween);
+    }
   }
 
   private boardPassengers(floor: number, boardedPassengers: Person[]): void {
@@ -188,10 +237,10 @@ export class SimulationController {
 
       passengerState.queueState = "inElevator";
       this.removePassengerFromQueueOrder(floor, person.id);
+      this.stopPassengerTween(person.id);
       this.elevatorView.addChild(passengerState.view);
     }
 
-    this.reflowElevatorPassengers();
     this.reflowFloorQueue(floor);
   }
 
@@ -209,6 +258,7 @@ export class SimulationController {
         return;
       }
 
+      this.stopPassengerTween(person.id);
       passengerState.view.x =
         (this.elevatorWidth - totalWidth) / 2 + index * slotWidth;
       passengerState.view.y =
@@ -235,7 +285,8 @@ export class SimulationController {
         return;
       }
 
-      new Tween(passengerState.view, this.tweenGroup)
+      this.stopPassengerTween(personId);
+      const tween = new Tween(passengerState.view, this.tweenGroup)
         .to(
           {
             x: this.layout.getPersonWaitingX(index),
@@ -244,8 +295,24 @@ export class SimulationController {
           this.passengerWalkDurationMs / 2,
         )
         .easing(Easing.Quadratic.Out)
+        .onComplete(() => {
+          this.passengerTweens.delete(personId);
+        })
         .start();
+
+      this.passengerTweens.set(personId, tween);
     });
+  }
+
+  private stopPassengerTween(personId: number): void {
+    const tween = this.passengerTweens.get(personId);
+
+    if (!tween) {
+      return;
+    }
+
+    tween.stop();
+    this.passengerTweens.delete(personId);
   }
 
   private getQueueOrder(floor: number): number[] {

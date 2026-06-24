@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { Application, Graphics } from "pixi.js";
 import { config } from "./config";
 import { SimulationController } from "./controller/SimulationController";
 import { BuildingLayout } from "./layout/BuildingLayout";
@@ -14,6 +14,15 @@ import { createElevator } from "./view/createElevator";
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   const elevator = createElevator(config.elevator);
+  const elevatorDirectionIndicator = createElevatorDirectionIndicator(
+    config.elevator.color,
+  );
+
+  elevatorDirectionIndicator.x = config.elevator.width - 14;
+  elevatorDirectionIndicator.y = 12;
+  elevatorDirectionIndicator.visible = false;
+  elevator.addChild(elevatorDirectionIndicator);
+
   const buildingRightX = app.screen.width - config.building.rightPadding;
   const buildingHeight =
     config.building.floorCount * config.building.floorHeight;
@@ -54,6 +63,7 @@ import { createElevator } from "./view/createElevator";
     layout,
     stage: app.stage,
     elevatorView: elevator,
+    elevatorDirectionIndicator,
     elevatorWidth: config.elevator.width,
     elevatorHeight: config.elevator.height,
     personConfig: config.person,
@@ -111,4 +121,13 @@ function getRandomTargetFloor(fromFloor: number, floorCount: number): number {
 
 function getRandomInteger(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function createElevatorDirectionIndicator(color: string): Graphics {
+  return new Graphics()
+    .moveTo(0, -6)
+    .lineTo(5, 5)
+    .lineTo(-5, 5)
+    .closePath()
+    .fill(color);
 }

@@ -24,6 +24,7 @@ type SimulationControllerOptions = {
   layout: BuildingLayout;
   stage: Container;
   elevatorView: Container;
+  elevatorDirectionIndicator: Container;
   elevatorWidth: number;
   elevatorHeight: number;
   personConfig: PersonConfig;
@@ -37,6 +38,7 @@ export class SimulationController {
   private readonly layout: BuildingLayout;
   private readonly stage: Container;
   private readonly elevatorView: Container;
+  private readonly elevatorDirectionIndicator: Container;
   private readonly elevatorWidth: number;
   private readonly elevatorHeight: number;
   private readonly personConfig: PersonConfig;
@@ -54,6 +56,7 @@ export class SimulationController {
     this.layout = options.layout;
     this.stage = options.stage;
     this.elevatorView = options.elevatorView;
+    this.elevatorDirectionIndicator = options.elevatorDirectionIndicator;
     this.elevatorWidth = options.elevatorWidth;
     this.elevatorHeight = options.elevatorHeight;
     this.personConfig = options.personConfig;
@@ -90,6 +93,7 @@ export class SimulationController {
 
   updateTweens(): void {
     this.tweenGroup.update();
+    this.updateElevatorDirectionIndicator();
   }
 
   private reserveQueueSlot(person: Person): void {
@@ -156,6 +160,7 @@ export class SimulationController {
     }
 
     this.building.getElevator().setDirectionToward(nextStop);
+    this.updateElevatorDirectionIndicator();
 
     new Tween(this.elevatorView, this.tweenGroup)
       .to(
@@ -302,6 +307,14 @@ export class SimulationController {
 
       this.passengerTweens.set(personId, tween);
     });
+  }
+
+  private updateElevatorDirectionIndicator(): void {
+    const direction = this.building.getElevator().getDirection();
+
+    this.elevatorDirectionIndicator.visible = direction !== "idle";
+    this.elevatorDirectionIndicator.rotation =
+      direction === "down" ? Math.PI : 0;
   }
 
   private stopPassengerTween(personId: number): void {

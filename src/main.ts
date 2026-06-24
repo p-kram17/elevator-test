@@ -80,6 +80,7 @@ import { createElevator } from "./view/createElevator";
     elevatorHeight: config.elevator.height,
     personConfig: config.person,
     passengerWalkDurationMs: config.animation.passengerWalkDurationMs,
+    boardingDurationMs: config.animation.boardingDurationMs,
     elevatorMoveDurationMsPerFloor:
       config.animation.elevatorMoveDurationMsPerFloor,
     elevatorStopDurationMs: config.animation.elevatorStopDurationMs,

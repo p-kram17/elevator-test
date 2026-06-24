@@ -6,4 +6,14 @@ export default defineConfig({
     port: 8080,
     open: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pixi: ["pixi.js"],
+          tween: ["@tweenjs/tween.js"],
+        },
+      },
+    },
+  },
 });

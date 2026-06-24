@@ -30,6 +30,7 @@ type SimulationControllerOptions = {
   elevatorHeight: number;
   personConfig: PersonConfig;
   passengerWalkDurationMs: number;
+  boardingDurationMs: number;
   elevatorMoveDurationMsPerFloor: number;
   elevatorStopDurationMs: number;
 };
@@ -44,6 +45,7 @@ export class SimulationController {
   private readonly elevatorHeight: number;
   private readonly personConfig: PersonConfig;
   private readonly passengerWalkDurationMs: number;
+  private readonly boardingDurationMs: number;
   private readonly elevatorMoveDurationMsPerFloor: number;
   private readonly elevatorStopDurationMs: number;
   private readonly tweenGroup = new Group();
@@ -62,6 +64,7 @@ export class SimulationController {
     this.elevatorHeight = options.elevatorHeight;
     this.personConfig = options.personConfig;
     this.passengerWalkDurationMs = options.passengerWalkDurationMs;
+    this.boardingDurationMs = options.boardingDurationMs;
     this.elevatorMoveDurationMsPerFloor =
       options.elevatorMoveDurationMsPerFloor;
     this.elevatorStopDurationMs = options.elevatorStopDurationMs;
@@ -179,7 +182,10 @@ export class SimulationController {
 
     this.dropOffPassengers(floor, droppedOff);
     this.boardPassengers(floor, boarded);
-    this.reflowElevatorPassengers();
+
+    if (boarded.length === 0) {
+      this.reflowElevatorPassengers();
+    }
 
     window.setTimeout(() => {
       this.moveElevatorToNextStop();
@@ -242,6 +248,11 @@ export class SimulationController {
       return;
     }
 
+    const elevatorPassengers = this.building.getElevator().getPassengers();
+    const elevatorTopLeftX = this.elevatorView.x - this.elevatorWidth / 2;
+    const elevatorTopLeftY = this.elevatorView.y - this.elevatorHeight / 2;
+    let pendingCount = boardedPassengers.length;
+
     for (const person of boardedPassengers) {
       const passengerState = this.passengerViewStates.get(person.id);
 
@@ -249,10 +260,50 @@ export class SimulationController {
         continue;
       }
 
+      const index = elevatorPassengers.findIndex((p) => p.id === person.id);
+
+      if (index === -1) {
+        continue;
+      }
+
       passengerState.queueState = "inElevator";
       this.removePassengerFromQueueOrder(floor, person.id);
       this.stopPassengerTween(person.id);
-      this.elevatorView.addChild(passengerState.view);
+
+      const targetPosition = getElevatorPassengerPosition(
+        index,
+        elevatorPassengers.length,
+        {
+          elevatorWidth: this.elevatorWidth,
+          elevatorHeight: this.elevatorHeight,
+          personWidth: this.personConfig.width,
+          personHeight: this.personConfig.height,
+          gap: 2,
+          padding: 6,
+        },
+      );
+
+      const view = passengerState.view;
+      const targetX = elevatorTopLeftX + targetPosition.x;
+      const targetY = elevatorTopLeftY + targetPosition.y;
+
+      const tween = new Tween(view, this.tweenGroup)
+        .to({ x: targetX, y: targetY }, this.boardingDurationMs)
+        .easing(Easing.Quadratic.InOut)
+        .onComplete(() => {
+          this.passengerTweens.delete(person.id);
+          this.elevatorView.addChild(view);
+          view.x = targetPosition.x;
+          view.y = targetPosition.y;
+          pendingCount--;
+
+          if (pendingCount === 0) {
+            this.reflowElevatorPassengers();
+          }
+        })
+        .start();
+
+      this.passengerTweens.set(person.id, tween);
     }
 
     this.reflowFloorQueue(floor);

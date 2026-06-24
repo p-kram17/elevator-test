@@ -2,6 +2,7 @@ import { Application, Container, Graphics } from "pixi.js";
 import { config } from "./config";
 import { SimulationController } from "./controller/SimulationController";
 import { BuildingLayout } from "./layout/BuildingLayout";
+import { getElevatorDirectionIndicatorPosition } from "./layout/ElevatorDirectionIndicatorLayout";
 import { BuildingModel } from "./model/BuildingModel";
 import { createBuilding } from "./view/createBuilding";
 import { createElevator } from "./view/createElevator";
@@ -14,12 +15,15 @@ import { createElevator } from "./view/createElevator";
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   const elevator = createElevator(config.elevator);
-  const elevatorDirectionIndicator = createElevatorDirectionIndicator(
-    config.elevator.color,
-  );
+  const elevatorDirectionIndicator = createElevatorDirectionIndicator();
+  const indicatorPosition = getElevatorDirectionIndicatorPosition({
+    elevatorWidth: config.elevator.width,
+    indicatorWidth: 28,
+    topOffset: 10,
+  });
 
-  elevatorDirectionIndicator.x = config.elevator.width - 14;
-  elevatorDirectionIndicator.y = 12;
+  elevatorDirectionIndicator.x = indicatorPosition.x;
+  elevatorDirectionIndicator.y = indicatorPosition.y;
   elevatorDirectionIndicator.visible = false;
   elevator.addChild(elevatorDirectionIndicator);
 
@@ -131,13 +135,13 @@ function getRandomInteger(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function createElevatorDirectionIndicator(color: string): Graphics {
+function createElevatorDirectionIndicator(): Graphics {
   return new Graphics()
     .moveTo(0, -6)
     .lineTo(5, 5)
     .lineTo(-5, 5)
     .closePath()
-    .fill(color);
+    .fill(config.elevator.color);
 }
 
 type RightSideCoverOptions = {

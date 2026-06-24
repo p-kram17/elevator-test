@@ -2,6 +2,7 @@ import { Easing, Group, Tween } from "@tweenjs/tween.js";
 import { Container } from "pixi.js";
 import type { PersonConfig } from "../config";
 import { BuildingLayout } from "../layout/BuildingLayout";
+import { getElevatorPassengerPosition } from "../layout/ElevatorPassengerLayout";
 import { BuildingModel } from "../model/BuildingModel";
 import { createPassenger } from "../model/createPassenger";
 import type { Person } from "../model/types";
@@ -209,6 +210,7 @@ export class SimulationController {
 
       passengerState.queueState = "leaving";
       this.stage.addChild(passengerState.view);
+      passengerState.view.scale.set(1);
       passengerState.view.x = worldPosition.x;
       passengerState.view.y = worldPosition.y;
 
@@ -258,10 +260,6 @@ export class SimulationController {
 
   private reflowElevatorPassengers(): void {
     const passengers = this.building.getElevator().getPassengers();
-    const slotWidth = this.personConfig.width + this.personConfig.gap;
-    const totalWidth =
-      passengers.length * this.personConfig.width +
-      Math.max(passengers.length - 1, 0) * this.personConfig.gap;
 
     passengers.forEach((person, index) => {
       const passengerState = this.passengerViewStates.get(person.id);
@@ -271,10 +269,19 @@ export class SimulationController {
       }
 
       this.stopPassengerTween(person.id);
-      passengerState.view.x =
-        (this.elevatorWidth - totalWidth) / 2 + index * slotWidth;
-      passengerState.view.y =
-        this.elevatorHeight - this.personConfig.height - this.personConfig.gap;
+      passengerState.view.scale.set(1);
+
+      const position = getElevatorPassengerPosition(index, passengers.length, {
+        elevatorWidth: this.elevatorWidth,
+        elevatorHeight: this.elevatorHeight,
+        personWidth: this.personConfig.width,
+        personHeight: this.personConfig.height,
+        gap: 2,
+        padding: 6,
+      });
+
+      passengerState.view.x = position.x;
+      passengerState.view.y = position.y;
     });
   }
 

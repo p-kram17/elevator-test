@@ -60,7 +60,7 @@ export const config: AppConfig = {
 
   elevator: {
     width: 60,
-    height: 70,
+    height: 84,
     color: "#00a6e8",
     capacity: 4,
   },
